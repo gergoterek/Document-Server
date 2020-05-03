@@ -7,57 +7,59 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Scanner;
 
-public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
+public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     private Socket s;
     private BufferedReader bf;
     private PrintWriter pw;
     private LinkedHashSet<String> contents;
 
-    public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception{
+    public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception {
         System.out.println("ClientHandler konstruktor");
         s = ss.accept();
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        pw = new PrintWriter(s.getOutputStream());
+        pw = new PrintWriter(s.getOutputStream(), true);
         this.contents = contents;
     }
+
+    @Override
     public void close() throws Exception {
         System.out.println("ClientHandler close");
-        if (s != null) {
-            pw.flush();
-            s.close();
-        }
+        pw.close();
+        bf.close();
+        s.close();
     }
+
+    @Override
     public void handleDownloadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
         System.out.println("ClientHandler letoltes");
-        bf = fromClient;
-        pw.println("Give a doc name:");
+        toClient.println("Give a doc name:");
         String fileName = fromClient.readLine();
         synchronized (contents) {
             if (contents.contains(fileName)) {
                 try (
-                    Scanner scFile = new Scanner(new File(fileName));
+                        Scanner scFile = new Scanner(new File(fileName));
                 ) {
                     while (scFile.hasNextLine()) {
-                        pw.println(scFile.nextLine());
+                        toClient.println(scFile.nextLine());
                     }
-                    pw.println("END_OF_DOCUMENT");
+                    toClient.println("END_OF_DOCUMENT");
                 }
             } else {
                 toClient.println("NOT_FOUND");
             }
         }
-        toClient.flush();
-        fromClient.close();
     }
+
+    @Override
     public void handleUploadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
         System.out.println("ClientHandler feltoltes");
-        pw.println("Give a new doc name:");
+        toClient.println("Give a new doc name:");
         String fileName = fromClient.readLine();
         ArrayList<String> fileText = new ArrayList<>();
 
         //Dokumentum szerkesztése
-        if(contents.contains(fileName)){
+        if (contents.contains(fileName)) {
             synchronized (contents) {
                 String line;
                 while ((line = fromClient.readLine()) != null) {
@@ -68,8 +70,8 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
                     }
                 }
                 FileWriter fileWriter = new FileWriter(fileName);
-                PrintWriter printWriter = new PrintWriter(fileWriter);
-                for(String l: fileText) {
+                PrintWriter printWriter = new PrintWriter(fileWriter, true);
+                for (String l : fileText) {
                     printWriter.print(l);
                 }
             }
@@ -84,51 +86,63 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
             }
         }
         FileWriter fileWriter = new FileWriter(fileName);
-        PrintWriter printWriter = new PrintWriter(fileWriter);
-        for(String l: fileText) {
+        PrintWriter printWriter = new PrintWriter(fileWriter, true);
+        for (String l : fileText) {
             printWriter.print(l);
         }
-        printWriter.close();
         contents.add(fileName);
         toClient.println("END_OF_DOCUMENT");
-        fromClient.close();
-
     }
-    public void handleListDocuments(PrintWriter toClient){
+
+    @Override
+    public void handleListDocuments(PrintWriter toClient) {
         System.out.println("ClientHandler lista");
-        for(String name: contents){
+        for (String name : contents) {
             toClient.println(name);
         }
         toClient.println("END_OF_LIST");
     }
-    public void handleUnknownRequest(PrintWriter toClient) throws IOException{
-        toClient.flush();
-        s.close();
+
+    @Override
+    public void handleUnknownRequest(PrintWriter toClient) throws IOException {
+        toClient.close();
+        //s.close();
     }
-    public void run(){
+
+    @Override
+    public void run() {
+        //System.out.println("ClientHandler run");
 
         try {
+            while (true) {
+                //String line;
+                //while ((line = bf.readLine()) != null) {
 
-            String line;
-            while ((line = bf.readLine()) != null) {
+                System.out.println("ClientHandler run bejottem");
 
+                String line = bf.readLine();
+                System.out.println(line + "rgerwge");
                 switch (line) {
                     case "DOWNLOAD_DOCUMENT":
+                        System.out.println("ClientHandler DOWNLOAD bejottem");
                         handleDownloadDocument(bf, pw);
                         break;
                     case "UPLOAD_DOCUMENT":
+                        System.out.println("ClientHandler UPLOAD bejottem");
                         handleUploadDocument(bf, pw);
                         break;
                     case "LIST_DOCUMENTS":
                         handleListDocuments(pw);
                         break;
                     default:
-                        System.out.println(line);
-                        System.out.println("ClientHandler run");
+                        System.out.println(line + "-t nyomta meg kliens");
                         handleUnknownRequest(pw);
                         break;
                 }
             }
-        } catch (IOException e){}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
