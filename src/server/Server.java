@@ -18,12 +18,16 @@ public class Server {
         ServerSocket ss = new ServerSocket(port);
 
         ClientHandler client1 = new ClientHandler(ss, index);
-        ClientHandler client2 = new ClientHandler(ss, index);
+        //ClientHandler client2 = new ClientHandler(ss, index);
 
-        while (true) {
-            client1.run();
-            client2.run();
-        }
+        Thread t1 = new Thread(() -> {
+            while (true) {
+                client1.run();
+                //client2.run();
+            }
+        });
+        t1.start();
+        //t1.join());
 
 
 //                Socket s1 = ss.accept();

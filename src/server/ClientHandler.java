@@ -3,7 +3,6 @@ package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Scanner;
@@ -16,18 +15,21 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
     private LinkedHashSet<String> contents;
 
     public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception{
+        System.out.println("ClientHandler konstruktor");
         s = ss.accept();
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
         pw = new PrintWriter(s.getOutputStream());
         this.contents = contents;
     }
     public void close() throws Exception {
+        System.out.println("ClientHandler close");
         if (s != null) {
             pw.flush();
             s.close();
         }
     }
     public void handleDownloadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
+        System.out.println("ClientHandler letoltes");
         bf = fromClient;
         pw.println("Give a doc name:");
         String fileName = fromClient.readLine();
@@ -49,6 +51,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
         fromClient.close();
     }
     public void handleUploadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
+        System.out.println("ClientHandler feltoltes");
         pw.println("Give a new doc name:");
         String fileName = fromClient.readLine();
         ArrayList<String> fileText = new ArrayList<>();
@@ -92,6 +95,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
 
     }
     public void handleListDocuments(PrintWriter toClient){
+        System.out.println("ClientHandler lista");
         for(String name: contents){
             toClient.println(name);
         }
@@ -102,9 +106,12 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
         s.close();
     }
     public void run(){
+
         try {
+
             String line;
-            while ((line = this.bf.readLine()) != null) {
+            while ((line = bf.readLine()) != null) {
+
                 switch (line) {
                     case "DOWNLOAD_DOCUMENT":
                         handleDownloadDocument(bf, pw);
@@ -116,6 +123,8 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable{
                         handleListDocuments(pw);
                         break;
                     default:
+                        System.out.println(line);
+                        System.out.println("ClientHandler run");
                         handleUnknownRequest(pw);
                         break;
                 }
