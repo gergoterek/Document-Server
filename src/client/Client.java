@@ -25,7 +25,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
         try (
                 Socket s = new Socket("localhost", 50000);
         ) {
-            if(s.isConnected())
+            if (s.isConnected())
                 System.out.println("Conn");
             bfServer = new BufferedReader(new InputStreamReader(s.getInputStream()));
             pwServer = new PrintWriter(s.getOutputStream(), true);
@@ -69,14 +69,14 @@ public class Client implements IClient, AutoCloseable, Runnable {
     @Override
     public void handleUploadDocument() throws IOException {
         pwServer.println("UPLOAD_DOCUMENT");
-        pwClient.println("Enter document name:");
-        String fileName = bfClient.readLine();
-        pwServer.println(fileName);
-        pwClient.println("Enter document content");
+        //pwClient.println("Enter document name:");
+
+        pwClient.println(bfServer.readLine());//Give a new doc name:
+        pwServer.println(bfClient.readLine());//send filename
+        pwClient.println(bfServer.readLine());//Enter doc content
 
         String line;
         while ((line = bfClient.readLine()) != null && line.length() != 0) {
-            pwServer.println(line);
             pwServer.println(line);
         }
         pwServer.println("END_OF_DOCUMENT");
@@ -86,7 +86,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
     public void handleListDocuments() throws IOException {
         pwServer.println("LIST_DOCUMENTS");
         String line = "";
-        while ((line = bfServer.readLine()) != null && line.equals("END_OF_LIST")) {
+        while ((line = bfServer.readLine()) != null && !line.equals("END_OF_LIST")) {
             pwClient.println(line);
         }
     }
@@ -96,7 +96,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         printMenu();
         try {
             while (true) {
-
                 String line = bfClient.readLine();
                 switch (line) {
                     case "0":

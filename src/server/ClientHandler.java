@@ -33,8 +33,8 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
     public void handleDownloadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
         toClient.println("Give a doc name:");
         String fileName = fromClient.readLine();
-        synchronized (contents) { //.intern()
-            if (contents.contains(fileName)) {
+        if (contents.contains(fileName)) {
+            synchronized (fileName.intern()) {
                 try (
                         Scanner scFile = new Scanner(new File(fileName));
                 ) {
@@ -43,22 +43,23 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                     }
                     toClient.println("END_OF_DOCUMENT");
                 }
-            } else {
-                toClient.println("NOT_FOUND");
             }
+        } else {
+            toClient.println("NOT_FOUND");
         }
     }
 
     @Override
     public void handleUploadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        toClient.println("Give a new doc name:");
+        toClient.println("Give a doc name:");
         String fileName = fromClient.readLine();
         ArrayList<String> fileText = new ArrayList<>();
 
         //Dokumentum szerkesztése
         if (contents.contains(fileName)) {
-            synchronized (contents) {
+            synchronized (fileName.intern()) {
                 String line;
+                toClient.println("Enter document content:");
                 while ((line = fromClient.readLine()) != null) {
                     if (!line.equals("END_OF_DOCUMENT")) {
                         fileText.add(line);
@@ -74,6 +75,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             }
         } else { //Új dokumentum
             String line;
+            toClient.println("Enter document content:");
             while ((line = fromClient.readLine()) != null) {
                 if (!line.equals("END_OF_DOCUMENT")) {
                     fileText.add(line);
@@ -109,10 +111,10 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
         try {
 
             String line = "";
-            line = bf.readLine();
+            //line = bf.readLine();
             while (true) {
-                if(s.isClosed())
-                    System.out.println("closed socket");
+//                if (s.isClosed())
+//                    System.out.println("closed socket");
                 line = bf.readLine();
                 while ((line = bf.readLine()) != null) {
                     System.out.println("bf.readLine() value is--- - " + line);
