@@ -76,7 +76,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
         pwClient.println(bfServer.readLine());//Enter doc content
 
         String line;
-        while ((line = bfClient.readLine()) != null && line.length() != 0) {
+        while ((line = bfClient.readLine()) != null && line.length() != 0 && !line.equals("EOF")) {
             pwServer.println(line);
         }
         pwServer.println("END_OF_DOCUMENT");

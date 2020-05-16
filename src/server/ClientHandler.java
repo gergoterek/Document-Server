@@ -67,12 +67,15 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                         break;
                     }
                 }
-                FileWriter fileWriter = new FileWriter(fileName);
+
+                FileWriter fileWriter = new FileWriter(fileName, true);
                 PrintWriter printWriter = new PrintWriter(fileWriter, true);
                 for (String l : fileText) {
                     printWriter.print(l);
                 }
             }
+            toClient.println("END_OF_DOCUMENT");
+
         } else { //Új dokumentum
             String line;
             toClient.println("Enter document content:");
@@ -83,14 +86,17 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                     break;
                 }
             }
+
+            if (!fileText.isEmpty()) {
+                FileWriter fileWriter = new FileWriter(fileName, true);
+                PrintWriter printWriter = new PrintWriter(fileWriter, true);
+                for (String l : fileText) {
+                    printWriter.print(l);
+                }
+                contents.add(fileName);
+            }
+            toClient.println("END_OF_DOCUMENT");
         }
-        FileWriter fileWriter = new FileWriter(fileName);
-        PrintWriter printWriter = new PrintWriter(fileWriter, true);
-        for (String l : fileText) {
-            printWriter.print(l);
-        }
-        contents.add(fileName);
-        toClient.println("END_OF_DOCUMENT");
     }
 
     @Override
@@ -115,7 +121,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             while (true) {
 //                if (s.isClosed())
 //                    System.out.println("closed socket");
-                line = bf.readLine();
+                //line = bf.readLine();
                 while ((line = bf.readLine()) != null) {
                     System.out.println("bf.readLine() value is--- - " + line);
                     //String line = this.bf.readLine();
