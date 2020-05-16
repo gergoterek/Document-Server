@@ -10,12 +10,12 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     private BufferedReader bfServer;
     private PrintWriter pwServer;
+    private BufferedWriter bw;
 
 
     public static void main(String[] args) {
         Client client = new Client(System.in, System.out);
         client.run();
-
     }
 
     public Client(InputStream userInput, OutputStream userOutput) {
@@ -25,17 +25,22 @@ public class Client implements IClient, AutoCloseable, Runnable {
         try (
                 Socket s = new Socket("localhost", 50000);
         ) {
+            if(s.isConnected())
+                System.out.println("Conn");
             bfServer = new BufferedReader(new InputStreamReader(s.getInputStream()));
             pwServer = new PrintWriter(s.getOutputStream(), true);
+            bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         System.out.println("Letrejott a client");
+        pwServer.println("Hello szerver");
+
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         System.out.println("Client close");
         bfClient.close();
         pwClient.close();
@@ -63,7 +68,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void handleUploadDocument() throws IOException {
-        //System.out.println("Client upload");
         pwServer.println("UPLOAD_DOCUMENT");
         pwClient.println("Enter document name:");
         String fileName = bfClient.readLine();
@@ -80,9 +84,8 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void handleListDocuments() throws IOException {
-        //System.out.println("Client doc list");
         pwServer.println("LIST_DOCUMENTS");
-        String line;
+        String line = "";
         while ((line = bfServer.readLine()) != null && line.equals("END_OF_LIST")) {
             pwClient.println(line);
         }
@@ -90,20 +93,19 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void run() {
-        //pwClient.println("Client run");
         printMenu();
         try {
             while (true) {
+
                 String line = bfClient.readLine();
-                int num = Integer.parseInt(line);
-                switch (num) {
-                    case 0:
+                switch (line) {
+                    case "0":
                         handleDownloadDocument();
                         break;
-                    case 1:
+                    case "1":
                         handleListDocuments();
                         break;
-                    case 2:
+                    case "2":
                         handleUploadDocument();
                         break;
                     default:
@@ -113,7 +115,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     void printMenu() {

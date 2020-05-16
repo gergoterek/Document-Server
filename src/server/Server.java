@@ -1,56 +1,52 @@
 package server;
 
+
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
 public class Server {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException{
         LinkedHashSet<String> index = new LinkedHashSet<>();
         LinkedList<ClientHandler> ch = new LinkedList<>();
 
         for (int i = 0; i < args.length; i++) {
             index.add(args[i]);
+            System.out.println(args[i]);
         }
-        try (ServerSocket ss = new ServerSocket(50000);) {
+        int port = 50000;
+        int j = 1;
+        try (ServerSocket ss = new ServerSocket(port);) {
             while (true) {
+                System.out.println(" Binding to port " + port + ", please wait  ...");
+                System.out.println("Server started: " + ss);
+                System.out.println("\nWaiting for the " + j + "th client ...");
                 ClientHandler c1 = new ClientHandler(ss, index);
                 ch.add(c1);
 
+
                 Thread t1 = new Thread(c1);
                 t1.start();
+                ++j;
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
 
-        //int port = 50000;
-//        try {
-//            ss = new ServerSocket(port);
-//            ClientHandler client1 = new ClientHandler(ss, index);
-//            client1.run();
+
+//    Sajnos nem működik:
+//    1. Server indítása után a list document folyton bezárja a socketet, és a kliens kilép.
+//    2. A feltöltés nem működik, ugyanis az end_of_document-et nem küldi át. flush() ?
+//      Egyébként EOF és nem END_OF_DOCUMENT kell a felhasználótól.
 //
-//        } catch (Exception ee) {
-//            if (ss != null && !ss.isClosed()) {
-//                try {
-//                    ss.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace(System.err);
-//                }
-//            }
+//    3. A kliens ne blokkolódjon, ha úgy listázzuk a fájlokat, hogy még egy dokumentum sincs regisztrálva
+//    4. A feltöltéskor, minden szálnak meg kell várnia, amíg a teljes dokumentum feltöltése megtörtént(szöveggel)
+//    5. Ha nincs fájl akkor is működjön, ne szalljon el
 
-            //ClientHandler client2 = new ClientHandler(ss, index);
-
-//        Thread t1 = new Thread(() -> {
-//            while (true) {
-//                client1.run();
-//                //client2.run();
-//            }
-//        });
-//        t1.start();
-            //t1.join());
 
 
 

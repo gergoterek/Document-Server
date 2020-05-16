@@ -1,5 +1,6 @@
 package server;
 
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,33 +10,30 @@ import java.util.Scanner;
 
 public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
-    private Socket s;
     private BufferedReader bf;
     private PrintWriter pw;
     private LinkedHashSet<String> contents;
+    Socket s;
 
     public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception {
-        System.out.println("ClientHandler konstruktor");
         s = ss.accept();
+        System.out.println("Client accepted: " + s);
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
         pw = new PrintWriter(s.getOutputStream(), true);
         this.contents = contents;
     }
 
     @Override
-    public void close() throws Exception {
-        System.out.println("ClientHandler close");
-        pw.close();
+    public void close() throws IOException {
         bf.close();
-        s.close();
+        pw.close();
     }
 
     @Override
     public void handleDownloadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        System.out.println("ClientHandler letoltes");
         toClient.println("Give a doc name:");
         String fileName = fromClient.readLine();
-        synchronized (contents) {
+        synchronized (contents) { //.intern()
             if (contents.contains(fileName)) {
                 try (
                         Scanner scFile = new Scanner(new File(fileName));
@@ -53,7 +51,6 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleUploadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        System.out.println("ClientHandler feltoltes");
         toClient.println("Give a new doc name:");
         String fileName = fromClient.readLine();
         ArrayList<String> fileText = new ArrayList<>();
@@ -96,48 +93,48 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleListDocuments(PrintWriter toClient) {
-        System.out.println("ClientHandler lista");
-        for (String name : contents) {
-            toClient.println(name);
-        }
-        toClient.println("END_OF_LIST");
+//        for (String name : contents) {
+//            toClient.println(name);
+//        }
+//        toClient.println("END_OF_LIST");
     }
 
     @Override
     public void handleUnknownRequest(PrintWriter toClient) throws IOException {
         toClient.close();
-        //s.close();
     }
 
     @Override
     public void run() {
-        //System.out.println("ClientHandler run");
-
         try {
+
+            String line = "";
+            line = bf.readLine();
             while (true) {
-                //String line;
-                //while ((line = bf.readLine()) != null) {
+                if(s.isClosed())
+                    System.out.println("closed socket");
+                line = bf.readLine();
+                while ((line = bf.readLine()) != null) {
+                    System.out.println("bf.readLine() value is--- - " + line);
+                    //String line = this.bf.readLine();
 
-                System.out.println("ClientHandler run bejottem");
-
-                String line = bf.readLine();
-                System.out.println(line + "rgerwge");
-                switch (line) {
-                    case "DOWNLOAD_DOCUMENT":
-                        System.out.println("ClientHandler DOWNLOAD bejottem");
-                        handleDownloadDocument(bf, pw);
-                        break;
-                    case "UPLOAD_DOCUMENT":
-                        System.out.println("ClientHandler UPLOAD bejottem");
-                        handleUploadDocument(bf, pw);
-                        break;
-                    case "LIST_DOCUMENTS":
-                        handleListDocuments(pw);
-                        break;
-                    default:
-                        System.out.println(line + "-t nyomta meg kliens");
-                        handleUnknownRequest(pw);
-                        break;
+                    switch (line) {
+                        case ("DOWNLOAD_DOCUMENT"):
+                            System.out.println("Download");
+                            handleDownloadDocument(bf, pw);
+                            break;
+                        case ("UPLOAD_DOCUMENT"):
+                            System.out.println("Upload");
+                            handleUploadDocument(bf, pw);
+                            break;
+                        case ("LIST_DOCUMENTS"):
+                            System.out.println("list");
+                            handleListDocuments(pw);
+                            break;
+                        default:
+                            handleUnknownRequest(pw);
+                            break;
+                    }
                 }
             }
         } catch (IOException e) {
