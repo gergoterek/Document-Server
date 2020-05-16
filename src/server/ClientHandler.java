@@ -93,10 +93,10 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleListDocuments(PrintWriter toClient) {
-//        for (String name : contents) {
-//            toClient.println(name);
-//        }
-//        toClient.println("END_OF_LIST");
+        for (String name : contents) {
+            toClient.println(name);
+        }
+        toClient.println("END_OF_LIST");
     }
 
     @Override

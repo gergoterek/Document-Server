@@ -25,7 +25,6 @@ public class Server {
                 ClientHandler c1 = new ClientHandler(ss, index);
                 ch.add(c1);
 
-
                 Thread t1 = new Thread(c1);
                 t1.start();
                 ++j;
