@@ -31,7 +31,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
             pwServer = new PrintWriter(s.getOutputStream(), true);
             bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
             run();
-            close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -42,7 +41,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         System.out.println("Client close");
         pwServer.println("EXIT");
         pwClient.close();
-        //System.exit(0);
         bfClient.close();
         bfServer.close();
 
@@ -69,7 +67,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
                 break;
             }
         }
-        System.out.println("Vege a letoltesnek");
+        System.out.println("Download has finished");
     }
 
     @Override
@@ -86,7 +84,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
             line = bfClient.readLine();
         }
         pwServer.println("END_OF_DOCUMENT");
-        System.out.println("Vege a feltoltesnek");
+        System.out.println("Upload has finished");
     }
 
     @Override
@@ -100,7 +98,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void run() {
-
         try {
             out:
             while (true) {
@@ -137,7 +134,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
     }
 
     void printMenu() {
-        System.out.println("MENU:");
+        System.out.println("\nMENU:");
         pwClient.println("0 - DOWNLOAD_DOCUMENT");
         pwClient.println("1 - LIST_DOCUMENTS");
         pwClient.println("2 - UPLOAD_DOCUMENT");

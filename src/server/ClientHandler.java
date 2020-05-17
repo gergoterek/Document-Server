@@ -77,9 +77,8 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
         toClient.println("Enter document content:");
         while (!(line = fromClient.readLine()).equals("END_OF_DOCUMENT")) {
             fileText.add(line);
-            System.out.println(line);
+            //System.out.println(line);
         }
-
         FileWriter fileWriter = new FileWriter(fileName, false);
         PrintWriter printWriter = new PrintWriter(fileWriter, true);
         for (String l : fileText) {
@@ -111,15 +110,15 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                 while ((line = bf.readLine()) != null) {
                     switch (line) {
                         case ("DOWNLOAD_DOCUMENT"):
-                            System.out.println("Function: Download");
+                            System.out.println("Used function: Download");
                             handleDownloadDocument(bf, pw);
                             break;
                         case ("UPLOAD_DOCUMENT"):
-                            System.out.println("Function: Upload");
+                            System.out.println("Used function: Upload");
                             handleUploadDocument(bf, pw);
                             break;
                         case ("LIST_DOCUMENTS"):
-                            System.out.println("Function: list");
+                            System.out.println("Used function: list");
                             handleListDocuments(pw);
                             break;
                         default:
