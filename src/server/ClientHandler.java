@@ -60,32 +60,30 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
         //Dokumentum szerkesztése
         if (contents.contains(fileName)) {
-            synchronized (fileName.intern()) {
-                uploadContent(fileName, fileText, fromClient,toClient);
-            }
-
+            uploadContent(fileName, fileText, fromClient, toClient);
         } else { //Új dokumentum
-            uploadContent(fileName, fileText, fromClient,toClient);
             synchronized (contents) {
                 contents.add(fileName);
             }
+            uploadContent(fileName, fileText, fromClient, toClient);
         }
     }
 
     public void uploadContent(String fileName, ArrayList<String> fileText, BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        String line;
-        toClient.println("Enter document content:");
-        while (!(line = fromClient.readLine()).equals("END_OF_DOCUMENT")) {
-            fileText.add(line);
-            //System.out.println(line);
+        synchronized (fileName.intern()) {
+            String line;
+            toClient.println("Enter document content:");
+            while (!(line = fromClient.readLine()).equals("END_OF_DOCUMENT")) {
+                fileText.add(line);
+            }
+            FileWriter fileWriter = new FileWriter(fileName, false);
+            PrintWriter printWriter = new PrintWriter(fileWriter, true);
+            for (String l : fileText) {
+                printWriter.println(l);
+            }
+            fileWriter.close();
+            printWriter.close();
         }
-        FileWriter fileWriter = new FileWriter(fileName, false);
-        PrintWriter printWriter = new PrintWriter(fileWriter, true);
-        for (String l : fileText) {
-            printWriter.println(l);
-        }
-        fileWriter.close();
-        printWriter.close();
     }
 
     @Override
