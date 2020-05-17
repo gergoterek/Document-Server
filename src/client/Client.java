@@ -43,7 +43,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         pwClient.close();
         bfClient.close();
         bfServer.close();
-
         pwServer.close();
         s.close();
     }
@@ -67,7 +66,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
                 break;
             }
         }
-        System.out.println("Download has finished");
+        //System.out.println("Download has finished");
     }
 
     @Override
@@ -84,7 +83,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
             line = bfClient.readLine();
         }
         pwServer.println("END_OF_DOCUMENT");
-        System.out.println("Upload has finished");
+        //System.out.println("Upload has finished");
     }
 
     @Override
@@ -116,7 +115,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
                     case "3":
                         break out;
                     default:
-                        pwClient.println("Warning: Invalid option.");
+                        pwClient.println("| Warning: Invalid option.");
                 }
             }
         } catch (IOException e) {
@@ -134,10 +133,10 @@ public class Client implements IClient, AutoCloseable, Runnable {
     }
 
     void printMenu() {
-        System.out.println("\nMENU:");
-        pwClient.println("0 - DOWNLOAD_DOCUMENT");
-        pwClient.println("1 - LIST_DOCUMENTS");
-        pwClient.println("2 - UPLOAD_DOCUMENT");
-        pwClient.println("3 - EXIT");
+        //System.out.println("\nMENU:");
+        pwClient.println("| 0 - download document");
+        pwClient.println("| 1 - list documents");
+        pwClient.println("| 2 - upload content");
+        pwClient.println("| 3 - EXIT");
     }
 }

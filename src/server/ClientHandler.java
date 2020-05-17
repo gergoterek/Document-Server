@@ -17,7 +17,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception {
         s = ss.accept();
-        System.out.println("\nClient accepted: " + s + "\n");
+        //System.out.println("\nClient accepted: " + s + "\n");
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
         pw = new PrintWriter(s.getOutputStream(), true);
         this.contents = contents;
@@ -33,7 +33,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleDownloadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        toClient.println("Give a doc name:");
+        toClient.println("| Enter document name:");
         String fileName = fromClient.readLine();
         if (contents.contains(fileName)) {
             synchronized (fileName.intern()) {
@@ -41,7 +41,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                         Scanner scFile = new Scanner(new File(fileName));
                 ) {
                     while (scFile.hasNextLine()) {
-                        toClient.println(scFile.nextLine());
+                        toClient.println("| " + scFile.nextLine());
                     }
                     toClient.println("END_OF_DOCUMENT");
                 }
@@ -54,25 +54,27 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleUploadDocument(BufferedReader fromClient, PrintWriter toClient) throws IOException {
-        toClient.println("Give a doc name:");
+        toClient.println("| Enter document name:");
         String fileName = fromClient.readLine();
         ArrayList<String> fileText = new ArrayList<>();
 
         //Dokumentum szerkesztése
         if (contents.contains(fileName)) {
-            uploadContent(fileName, fileText, fromClient, toClient);
+            uploadContent(fileName, fileText, fromClient, toClient, false);
         } else { //Új dokumentum
-            synchronized (contents) {
-                contents.add(fileName);
-            }
-            uploadContent(fileName, fileText, fromClient, toClient);
+            uploadContent(fileName, fileText, fromClient, toClient, true);
         }
     }
 
-    public void uploadContent(String fileName, ArrayList<String> fileText, BufferedReader fromClient, PrintWriter toClient) throws IOException {
+    public void uploadContent(String fileName, ArrayList<String> fileText, BufferedReader fromClient, PrintWriter toClient, boolean isNew) throws IOException {
         synchronized (fileName.intern()) {
+            if(isNew){
+                synchronized (contents) {
+                    contents.add(fileName);
+                }
+            }
             String line;
-            toClient.println("Enter document content:");
+            toClient.println("| Enter document content:");
             while (!(line = fromClient.readLine()).equals("END_OF_DOCUMENT")) {
                 fileText.add(line);
             }
@@ -127,6 +129,14 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (s != null) {
+                    close();
+                }
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
 
     }
