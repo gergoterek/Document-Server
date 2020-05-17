@@ -1,17 +1,24 @@
 package server;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
 public class Server {
-    public static void main(String[] args) throws IOException, InterruptedException{
+    public static void main(String[] args) throws IOException, InterruptedException {
         LinkedHashSet<String> index = new LinkedHashSet<>();
-        LinkedList<ClientHandler> ch = new LinkedList<>();
+        //LinkedList<ClientHandler> ch = new LinkedList<>();
 
         for (int i = 0; i < args.length; i++) {
+            File f = new File(args[i]);
+            if (f.exists() && !f.isDirectory()) {
+
+            } else {
+                f.createNewFile();
+            }
             index.add(args[i]);
             System.out.println(args[i]);
         }
@@ -19,11 +26,11 @@ public class Server {
         int j = 1;
         try (ServerSocket ss = new ServerSocket(port);) {
             while (true) {
-                System.out.println(" Binding to port " + port + ", please wait  ...");
+                System.out.println("Binding to port " + port + ", please wait  ...");
                 System.out.println("Server started: " + ss);
                 System.out.println("\nWaiting for the " + j + "th client ...");
                 ClientHandler c1 = new ClientHandler(ss, index);
-                ch.add(c1);
+                //ch.add(c1);
 
                 Thread t1 = new Thread(c1);
                 t1.start();

@@ -25,8 +25,10 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void close() throws IOException {
+        System.out.println("closeolja");
         bf.close();
         pw.close();
+        s.close();
     }
 
     @Override
@@ -93,7 +95,9 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                 for (String l : fileText) {
                     printWriter.print(l);
                 }
-                contents.add(fileName);
+                synchronized (contents) {
+                    contents.add(fileName);
+                }
             }
             toClient.println("END_OF_DOCUMENT");
         }
@@ -109,35 +113,30 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void handleUnknownRequest(PrintWriter toClient) throws IOException {
-        toClient.close();
+        close();
     }
 
     @Override
-    public void run() {
+    public void run(){
         try {
-
             String line = "";
-            //line = bf.readLine();
             while (true) {
-//                if (s.isClosed())
-//                    System.out.println("closed socket");
-                //line = bf.readLine();
                 while ((line = bf.readLine()) != null) {
-                    System.out.println("bf.readLine() value is--- - " + line);
-                    //String line = this.bf.readLine();
-
                     switch (line) {
                         case ("DOWNLOAD_DOCUMENT"):
-                            System.out.println("Download");
+                            System.out.println("Function: Download");
                             handleDownloadDocument(bf, pw);
                             break;
                         case ("UPLOAD_DOCUMENT"):
-                            System.out.println("Upload");
+                            System.out.println("Function: Upload");
                             handleUploadDocument(bf, pw);
                             break;
                         case ("LIST_DOCUMENTS"):
-                            System.out.println("list");
+                            System.out.println("Function: list");
                             handleListDocuments(pw);
+                            break;
+                        case ("exit"):
+                            handleUnknownRequest(pw);
                             break;
                         default:
                             handleUnknownRequest(pw);

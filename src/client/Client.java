@@ -2,6 +2,7 @@ package client;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 
 public class Client implements IClient, AutoCloseable, Runnable {
@@ -11,32 +12,29 @@ public class Client implements IClient, AutoCloseable, Runnable {
     private BufferedReader bfServer;
     private PrintWriter pwServer;
     private BufferedWriter bw;
-
+    Socket s;
 
     public static void main(String[] args) {
         Client client = new Client(System.in, System.out);
-        client.run();
     }
 
     public Client(InputStream userInput, OutputStream userOutput) {
 
         bfClient = new BufferedReader(new InputStreamReader(userInput));
         pwClient = new PrintWriter(userOutput, true);
-        try (
-                Socket s = new Socket("localhost", 50000);
-        ) {
+
+        try {
+            s = new Socket("localhost", 50000);
             if (s.isConnected())
-                System.out.println("Conn");
+                System.out.println("Connected to server");
             bfServer = new BufferedReader(new InputStreamReader(s.getInputStream()));
             pwServer = new PrintWriter(s.getOutputStream(), true);
             bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-
+            run();
+            close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Letrejott a client");
-        pwServer.println("Hello szerver");
-
     }
 
     @Override
@@ -46,24 +44,28 @@ public class Client implements IClient, AutoCloseable, Runnable {
         pwClient.close();
         pwServer.close();
         bfServer.close();
+        s.close();
+        System.exit(0);
     }
 
     @Override
     public void handleDownloadDocument() throws IOException {
-        System.out.println("Client download");
         pwServer.println("DOWNLOAD_DOCUMENT");
-        pwClient.println("Enter document name:");
+        pwClient.println(bfServer.readLine());
+
         String fileName = bfClient.readLine();
         pwServer.println(fileName);
 
-        String line;
-        while ((line = bfServer.readLine()) != null) {
+
+        String line = "";
+        while ((line = bfServer.readLine()) != null && !bfServer.readLine().equals("NOT_FOUND")) {
             if (!line.equals("END_OF_DOCUMENT")) {
                 pwClient.println(line);
             } else {
                 break;
             }
         }
+        System.out.println("Vege a letoltesnek");
     }
 
     @Override
@@ -80,6 +82,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
             pwServer.println(line);
         }
         pwServer.println("END_OF_DOCUMENT");
+        System.out.println("Vege a feltoltesnek");
     }
 
     @Override
@@ -93,9 +96,10 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void run() {
-        printMenu();
+
         try {
             while (true) {
+                printMenu();
                 String line = bfClient.readLine();
                 switch (line) {
                     case "0":
@@ -109,6 +113,9 @@ public class Client implements IClient, AutoCloseable, Runnable {
                         break;
                     default:
                         pwClient.println("Warning: Invalid option.");
+                        close();
+                        //pwServer.println("exit");
+                        //close();
                 }
             }
         } catch (IOException e) {
@@ -117,6 +124,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
     }
 
     void printMenu() {
+        System.out.println("MENU:");
         pwClient.println("0 - DOWNLOAD_DOCUMENT");
         pwClient.println("1 - LIST_DOCUMENTS");
         pwClient.println("2 - UPLOAD_DOCUMENT");
