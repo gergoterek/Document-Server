@@ -5,38 +5,26 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 
 public class Server {
     public static void main(String[] args) throws IOException, InterruptedException {
         LinkedHashSet<String> index = new LinkedHashSet<>();
-        //LinkedList<ClientHandler> ch = new LinkedList<>();
-
+        System.out.println("Doc list:");
         for (int i = 0; i < args.length; i++) {
             File f = new File(args[i]);
-            if (f.exists() && !f.isDirectory()) {
-
-            } else {
+            if (!f.exists()) {
                 f.createNewFile();
             }
             index.add(args[i]);
-            System.out.println(args[i]);
+            System.out.print(args[i] + " ");
         }
         int port = 50000;
-        int j = 1;
         try (ServerSocket ss = new ServerSocket(port);) {
             while (true) {
-                System.out.println("Binding to port " + port + ", please wait  ...");
-                System.out.println("Server started: " + ss);
-                System.out.println("\nWaiting for the " + j + "th client ...");
                 ClientHandler c1 = new ClientHandler(ss, index);
-                //ch.add(c1);
-
                 Thread t1 = new Thread(c1);
                 t1.start();
-                ++j;
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,6 +40,11 @@ public class Server {
 //    3. A kliens ne blokkolódjon, ha úgy listázzuk a fájlokat, hogy még egy dokumentum sincs regisztrálva
 //    4. A feltöltéskor, minden szálnak meg kell várnia, amíg a teljes dokumentum feltöltése megtörtént(szöveggel)
 //    5. Ha nincs fájl akkor is működjön, ne szalljon el
+
+//hozzáír a fájhoz upload
+//exit, kell e sys.exit
+//hogy csinálták meg a close-t hogy meghívja állandóan
+//hogyan lép ki a kliens
 
 
 

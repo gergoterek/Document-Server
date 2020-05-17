@@ -17,7 +17,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception {
         s = ss.accept();
-        System.out.println("Client accepted: " + s);
+        System.out.println("\nClient accepted: " + s + "\n");
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
         pw = new PrintWriter(s.getOutputStream(), true);
         this.contents = contents;
@@ -25,7 +25,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     @Override
     public void close() throws IOException {
-        System.out.println("closeolja");
+        System.out.println("\nclient is down\n");
         bf.close();
         pw.close();
         s.close();
@@ -48,6 +48,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             }
         } else {
             toClient.println("NOT_FOUND");
+            System.out.println("not found");
         }
     }
 
@@ -60,47 +61,32 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
         //Dokumentum szerkesztése
         if (contents.contains(fileName)) {
             synchronized (fileName.intern()) {
-                String line;
-                toClient.println("Enter document content:");
-                while ((line = fromClient.readLine()) != null) {
-                    if (!line.equals("END_OF_DOCUMENT")) {
-                        fileText.add(line);
-                    } else {
-                        break;
-                    }
-                }
-
-                FileWriter fileWriter = new FileWriter(fileName, true);
-                PrintWriter printWriter = new PrintWriter(fileWriter, true);
-                for (String l : fileText) {
-                    printWriter.print(l);
-                }
+                uploadContent(fileName, fileText, fromClient,toClient);
             }
-            toClient.println("END_OF_DOCUMENT");
 
         } else { //Új dokumentum
-            String line;
-            toClient.println("Enter document content:");
-            while ((line = fromClient.readLine()) != null) {
-                if (!line.equals("END_OF_DOCUMENT")) {
-                    fileText.add(line);
-                } else {
-                    break;
-                }
+            uploadContent(fileName, fileText, fromClient,toClient);
+            synchronized (contents) {
+                contents.add(fileName);
             }
-
-            if (!fileText.isEmpty()) {
-                FileWriter fileWriter = new FileWriter(fileName, true);
-                PrintWriter printWriter = new PrintWriter(fileWriter, true);
-                for (String l : fileText) {
-                    printWriter.print(l);
-                }
-                synchronized (contents) {
-                    contents.add(fileName);
-                }
-            }
-            toClient.println("END_OF_DOCUMENT");
         }
+    }
+
+    public void uploadContent(String fileName, ArrayList<String> fileText, BufferedReader fromClient, PrintWriter toClient) throws IOException {
+        String line;
+        toClient.println("Enter document content:");
+        while (!(line = fromClient.readLine()).equals("END_OF_DOCUMENT")) {
+            fileText.add(line);
+            System.out.println(line);
+        }
+
+        FileWriter fileWriter = new FileWriter(fileName, false);
+        PrintWriter printWriter = new PrintWriter(fileWriter, true);
+        for (String l : fileText) {
+            printWriter.println(l);
+        }
+        fileWriter.close();
+        printWriter.close();
     }
 
     @Override
@@ -117,9 +103,10 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
     }
 
     @Override
-    public void run(){
+    public void run() {
         try {
             String line = "";
+            out:
             while (true) {
                 while ((line = bf.readLine()) != null) {
                     switch (line) {
@@ -135,12 +122,9 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
                             System.out.println("Function: list");
                             handleListDocuments(pw);
                             break;
-                        case ("exit"):
-                            handleUnknownRequest(pw);
-                            break;
                         default:
                             handleUnknownRequest(pw);
-                            break;
+                            break out;
                     }
                 }
             }

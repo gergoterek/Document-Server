@@ -40,27 +40,31 @@ public class Client implements IClient, AutoCloseable, Runnable {
     @Override
     public void close() throws IOException {
         System.out.println("Client close");
-        bfClient.close();
+        pwServer.println("EXIT");
         pwClient.close();
-        pwServer.close();
+        //System.exit(0);
+        bfClient.close();
         bfServer.close();
+
+        pwServer.close();
         s.close();
-        System.exit(0);
     }
 
     @Override
     public void handleDownloadDocument() throws IOException {
         pwServer.println("DOWNLOAD_DOCUMENT");
-        pwClient.println(bfServer.readLine());
+        pwClient.println(bfServer.readLine());//Give a doc name
 
         String fileName = bfClient.readLine();
         pwServer.println(fileName);
 
-
         String line = "";
-        while ((line = bfServer.readLine()) != null && !bfServer.readLine().equals("NOT_FOUND")) {
-            if (!line.equals("END_OF_DOCUMENT")) {
+        while ((line = bfServer.readLine()) != null) {
+            if (!line.equals("END_OF_DOCUMENT") && !line.equals("NOT_FOUND")) {
                 pwClient.println(line);
+            } else if (line.equals("NOT_FOUND")) {
+                pwClient.println(line);
+                break;
             } else {
                 break;
             }
@@ -71,15 +75,15 @@ public class Client implements IClient, AutoCloseable, Runnable {
     @Override
     public void handleUploadDocument() throws IOException {
         pwServer.println("UPLOAD_DOCUMENT");
-        //pwClient.println("Enter document name:");
 
         pwClient.println(bfServer.readLine());//Give a new doc name:
         pwServer.println(bfClient.readLine());//send filename
         pwClient.println(bfServer.readLine());//Enter doc content
 
-        String line;
-        while ((line = bfClient.readLine()) != null && line.length() != 0 && !line.equals("EOF")) {
+        String line = bfClient.readLine();
+        while (!line.equals("EOF")) {
             pwServer.println(line);
+            line = bfClient.readLine();
         }
         pwServer.println("END_OF_DOCUMENT");
         System.out.println("Vege a feltoltesnek");
@@ -98,6 +102,7 @@ public class Client implements IClient, AutoCloseable, Runnable {
     public void run() {
 
         try {
+            out:
             while (true) {
                 printMenu();
                 String line = bfClient.readLine();
@@ -111,16 +116,24 @@ public class Client implements IClient, AutoCloseable, Runnable {
                     case "2":
                         handleUploadDocument();
                         break;
+                    case "3":
+                        break out;
                     default:
                         pwClient.println("Warning: Invalid option.");
-                        close();
-                        //pwServer.println("exit");
-                        //close();
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (s != null) {
+                    close();
+                }
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
+
     }
 
     void printMenu() {
@@ -128,5 +141,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         pwClient.println("0 - DOWNLOAD_DOCUMENT");
         pwClient.println("1 - LIST_DOCUMENTS");
         pwClient.println("2 - UPLOAD_DOCUMENT");
+        pwClient.println("3 - EXIT");
     }
 }
