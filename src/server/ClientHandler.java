@@ -14,21 +14,25 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
     private PrintWriter pw;
     private LinkedHashSet<String> contents;
     Socket s;
+    private boolean running;
 
     public ClientHandler(ServerSocket ss, LinkedHashSet<String> contents) throws Exception {
         s = ss.accept();
-        //System.out.println("\nClient accepted: " + s + "\n");
+        System.out.println("\nClient accepted: " + s + "\n");
         bf = new BufferedReader(new InputStreamReader(s.getInputStream()));
         pw = new PrintWriter(s.getOutputStream(), true);
         this.contents = contents;
+        running = true;
     }
 
     @Override
     public void close() throws IOException {
-        System.out.println("\nclient is down\n");
+        System.out.println("\nclient is down");
+        running = false;
         bf.close();
         pw.close();
         s.close();
+        s = null;
     }
 
     @Override
@@ -48,7 +52,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             }
         } else {
             toClient.println("NOT_FOUND");
-            System.out.println("not found");
+            //System.out.println("not found");
         }
     }
 
@@ -68,7 +72,7 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
 
     public void uploadContent(String fileName, ArrayList<String> fileText, BufferedReader fromClient, PrintWriter toClient, boolean isNew) throws IOException {
         synchronized (fileName.intern()) {
-            if(isNew){
+            if (isNew) {
                 synchronized (contents) {
                     contents.add(fileName);
                 }
@@ -107,24 +111,29 @@ public class ClientHandler implements IClientHandler, AutoCloseable, Runnable {
             String line = "";
             out:
             while (true) {
-                while ((line = bf.readLine()) != null) {
-                    switch (line) {
-                        case ("DOWNLOAD_DOCUMENT"):
-                            System.out.println("Used function: Download");
-                            handleDownloadDocument(bf, pw);
-                            break;
-                        case ("UPLOAD_DOCUMENT"):
-                            System.out.println("Used function: Upload");
-                            handleUploadDocument(bf, pw);
-                            break;
-                        case ("LIST_DOCUMENTS"):
-                            System.out.println("Used function: list");
-                            handleListDocuments(pw);
-                            break;
-                        default:
-                            handleUnknownRequest(pw);
-                            break out;
+                try {
+                    while ((line = bf.readLine()) != null && running) {
+                        switch (line) {
+                            case ("DOWNLOAD_DOCUMENT"):
+                                System.out.println("Used function: Download");
+                                handleDownloadDocument(bf, pw);
+                                break;
+                            case ("UPLOAD_DOCUMENT"):
+                                System.out.println("Used function: Upload");
+                                handleUploadDocument(bf, pw);
+                                break;
+                            case ("LIST_DOCUMENTS"):
+                                System.out.println("Used function: list");
+                                handleListDocuments(pw);
+                                break;
+                            default:
+                                handleUnknownRequest(pw);
+                                return;
+                        }
                     }
+                } catch (Exception er) {
+                    handleUnknownRequest(pw);
+                    return;
                 }
             }
         } catch (IOException e) {

@@ -25,8 +25,8 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
         try {
             s = new Socket("localhost", 50000);
-            if (s.isConnected())
-                System.out.println("Connected to server");
+//            if (s.isConnected())
+//                System.out.println("Connected to server");
             bfServer = new BufferedReader(new InputStreamReader(s.getInputStream()));
             pwServer = new PrintWriter(s.getOutputStream(), true);
             bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
@@ -38,13 +38,14 @@ public class Client implements IClient, AutoCloseable, Runnable {
 
     @Override
     public void close() throws IOException {
-        System.out.println("Client close");
+        //System.out.println("Client close");
         pwServer.println("EXIT");
         pwClient.close();
         bfClient.close();
         bfServer.close();
         pwServer.close();
         s.close();
+        s = null;
     }
 
     @Override
@@ -112,8 +113,8 @@ public class Client implements IClient, AutoCloseable, Runnable {
                     case "2":
                         handleUploadDocument();
                         break;
-                    case "3":
-                        break out;
+//                    case "3":
+//                        break out;
                     default:
                         pwClient.println("| Warning: Invalid option.");
                 }
@@ -137,6 +138,6 @@ public class Client implements IClient, AutoCloseable, Runnable {
         pwClient.println("| 0 - download document");
         pwClient.println("| 1 - list documents");
         pwClient.println("| 2 - upload content");
-        pwClient.println("| 3 - EXIT");
+        //pwClient.println("| 3 - EXIT");
     }
 }
